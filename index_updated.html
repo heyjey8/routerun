@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f1117" />
+  <title>RouteRun — Delivery Driver</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── Design tokens ─── */
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --card:      #22263a;
+      --border:    rgba(255,255,255,0.08);
+      --accent:    #f5c842;
+      --accent2:   #3b82f6;
+      --success:   #22c55e;
+      --danger:    #ef4444;
+      --text:      #e8eaf0;
+      --muted:     #717590;
+      --radius:    18px;
+      --tap:       56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overscroll-behavior: none;
+    }
+
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 180px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 0;
+    }
+    .logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.35rem;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+    .badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+    .badge strong { color: var(--accent); }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 24px 20px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .link-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      padding: 4px 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .link-btn:active { opacity: 0.6; }
+
+    .add-card {
+      margin: 0 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .hint::before { content: "🎤"; font-size: 1rem; }
+    .input-row { display: flex; gap: 10px; }
+    #addressInput {
+      flex: 1;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      padding: 0 16px;
+      height: var(--tap);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      min-width: 0;
+    }
+    #addressInput::placeholder { color: var(--muted); }
+    #addressInput:focus { border-color: var(--accent); }
+
+    .btn {
+      height: var(--tap);
+      border-radius: 12px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn:active { opacity: 0.75; transform: scale(0.97); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-add { background: var(--accent); color: #0f1117; padding: 0 22px; }
+
+    .origin-card {
+      margin: 12px 16px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .origin-info { flex: 1; min-width: 0; }
+    .origin-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 2px; }
+    .origin-sub { font-size: 0.75rem; color: var(--muted); line-height: 1.35; word-break: break-word; }
+    .origin-sub.active { color: var(--success); }
+
+    .switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px; height: 22px;
+      left: 3px; top: 3px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .switch input:checked + .slider { background: rgba(59,130,246,0.25); border-color: var(--accent2); }
+    .switch input:checked + .slider::before { transform: translateX(22px); background: var(--accent2); }
+
+    .list-wrap { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .stop-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.22s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stop-num {
+      font-family: 'DM Mono', monospace;
+      background: var(--card);
+      border-radius: 10px;
+      min-width: 52px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+      line-height: 1.1;
+      padding: 2px 4px;
+    }
+    .stop-num .label { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.08em; }
+    .stop-num .n { font-size: 1.05rem; font-weight: 500; }
+
+    .stop-addr { flex: 1; font-size: 0.95rem; line-height: 1.35; word-break: break-word; }
+
+    .btn-delete {
+      background: rgba(239,68,68,0.12);
+      color: var(--danger);
+      border: none;
+      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .btn-delete:active { background: rgba(239,68,68,0.28); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; line-height: 1.5; }
+
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(15,17,23,0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid var(--border);
+      padding: 14px 16px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 10px;
+    }
+    .btn-optimize { flex: 1; background: var(--accent2); color: #fff; }
+    .btn-navigate { flex: 1; background: var(--accent); color: #0f1117; }
+
+    #toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="logo">Route<span>Run</span></div>
+    <div class="badge">Stops: <strong id="stopCount">0</strong></div>
+  </header>
+
+  <!-- Add delivery -->
+  <div class="section-label"><span>Add Delivery</span></div>
+  <div class="add-card">
+    <div class="hint">Use your keyboard microphone to speak the address</div>
+    <div class="input-row">
+      <input
+        id="addressInput"
+        type="text"
+        inputmode="text"
+        autocomplete="street-address"
+        autocorrect="off"
+        spellcheck="false"
+        placeholder="Street, City, State…"
+        enterkeyhint="done"
+      />
+      <button class="btn btn-add" id="btnAdd">Add</button>
+    </div>
+  </div>
+
+  <!-- GPS origin toggle -->
+  <div class="origin-card">
+    <div class="origin-info">
+      <div class="origin-title">Start from my location</div>
+      <div class="origin-sub" id="originSub">Off — first stop will be the origin</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="gpsToggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- Delivery list -->
+  <div class="section-label">
+    <span>Deliveries</span>
+    <button class="link-btn" id="btnClear" style="display:none;">Clear All</button>
+  </div>
+  <div class="list-wrap" id="stopList"></div>
+</div>
+
+<!-- Sticky action bar -->
+<div class="action-bar">
+  <button class="btn btn-optimize" id="btnOptimize" disabled>🔀 Optimize Route</button>
+  <button class="btn btn-navigate" id="btnNavigate" disabled>🗺 Start Navigation</button>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  /* ══════════════════════════════════════════════════
+     RouteRun — Delivery Driver App
+     - Storage  : localStorage (fully offline)
+     - Optimize : Opens Google Maps with waypoints=optimize:true
+     - Navigate : Same universal Google Maps URL
+     - No API key, no backend.
+     ══════════════════════════════════════════════════ */
+
+  const STORAGE_KEY = "routerun_stops";
+  let stops = [];          // [{ id, address }]
+  let useGPS = false;
+  let gpsCoords = null;    // { lat, lng }
+
+  // DOM
+  const input       = document.getElementById("addressInput");
+  const btnAdd      = document.getElementById("btnAdd");
+  const btnOptimize = document.getElementById("btnOptimize");
+  const btnNavigate = document.getElementById("btnNavigate");
+  const btnClear    = document.getElementById("btnClear");
+  const stopList    = document.getElementById("stopList");
+  const stopCount   = document.getElementById("stopCount");
+  const toast       = document.getElementById("toast");
+  const gpsToggle   = document.getElementById("gpsToggle");
+  const originSub   = document.getElementById("originSub");
+
+  /* Storage */
+  function saveStops() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stops)); } catch(e) {}
+  }
+  function loadStops() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) stops = JSON.parse(raw);
+    } catch(e) { stops = []; }
+  }
+
+  /* Render */
+  function render() {
+    stopCount.textContent = stops.length;
+    btnOptimize.disabled = stops.length < 2;
+    btnNavigate.disabled = stops.length === 0;
+    btnClear.style.display = stops.length > 0 ? "inline-block" : "none";
+
+    if (stops.length === 0) {
+      stopList.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📦</div>
+          <p>No deliveries yet.<br>Add an address above to get started.</p>
+        </div>`;
+      return;
+    }
+
+    stopList.innerHTML = stops.map((s, i) => `
+      <div class="stop-card">
+        <div class="stop-num">
+          <span class="label">STOP</span>
+          <span class="n">${i + 1}</span>
+        </div>
+        <div class="stop-addr">${escHtml(s.address)}</div>
+        <button class="btn-delete" onclick="deleteStop('${s.id}')" aria-label="Delete stop ${i + 1}">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // Escape HTML via DOM — avoids entity literals in source,
+  // which some deploy pipelines decode and break the JS.
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  /* Add / Delete / Clear */
+  function addStop() {
+    const addr = input.value.trim();
+    if (!addr) { showToast("Enter an address first"); return; }
+    stops.push({ id: Date.now().toString(), address: addr });
+    saveStops();
+    render();
+    input.value = "";
+    input.blur();
+    showToast("✅ Added");
+  }
+  btnAdd.addEventListener("click", addStop);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") addStop(); });
+
+  window.deleteStop = function(id) {
+    stops = stops.filter(s => s.id !== id);
+    saveStops();
+    render();
+  };
+
+  btnClear.addEventListener("click", () => {
+    if (stops.length === 0) return;
+    if (!confirm("Clear all deliveries? This cannot be undone.")) return;
+    stops = [];
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+    showToast("🗑 All deliveries cleared");
+  });
+
+  /* GPS toggle */
+  gpsToggle.addEventListener("change", () => {
+    if (gpsToggle.checked) {
+      if (!("geolocation" in navigator)) {
+        showToast("⚠️ GPS not supported");
+        gpsToggle.checked = false;
+        return;
+      }
+      originSub.textContent = "Requesting location…";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          useGPS = true;
+          originSub.classList.add("active");
+          originSub.textContent = `On — using ${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
+          showToast("📍 GPS enabled");
+        },
+        () => {
+          gpsToggle.checked = false;
+          useGPS = false;
+          gpsCoords = null;
+          originSub.classList.remove("active");
+          originSub.textContent = "Permission denied — first stop will be origin";
+          showToast("⚠️ Location permission denied");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      useGPS = false;
+      gpsCoords = null;
+      originSub.classList.remove("active");
+      originSub.textContent = "Off — first stop will be the origin";
+    }
+  });
+
+  /* Build Google Maps universal URL (no API key). */
+  function buildMapsUrl({ optimize }) {
+    let origin, routeStops;
+    if (useGPS && gpsCoords) {
+      origin     = `${gpsCoords.lat},${gpsCoords.lng}`;
+      routeStops = stops.slice();
+    } else {
+      origin     = stops[0].address;
+      routeStops = stops.slice(1);
+    }
+
+    if (routeStops.length === 0) {
+      return `https://www.google.com/maps/dir/?api=1`
+           + `&origin=${encodeURIComponent(origin)}`
+           + `&travelmode=driving`;
+    }
+
+    const destination = routeStops[routeStops.length - 1].address;
+    const middle      = routeStops.slice(0, -1).map(s => s.address);
+
+    let waypointsParam = "";
+    if (middle.length > 0) {
+      const joined = middle.map(a => encodeURIComponent(a)).join('|');
+      waypointsParam = optimize
+        ? `&waypoints=${encodeURIComponent("optimize:true|")}${joined}`
+        : `&waypoints=${joined}`;
+    }
+
+    return `https://www.google.com/maps/dir/?api=1`
+         + `&origin=${encodeURIComponent(origin)}`
+         + `&destination=${encodeURIComponent(destination)}`
+         + waypointsParam
+         + `&travelmode=driving`;
+  }
+
+  /* Optimize & Navigate — both open Google Maps directly */
+  btnOptimize.addEventListener("click", () => {
+    if (stops.length < 2) return;
+    if (useGPS && !gpsCoords) { showToast("Waiting for GPS…"); return; }
+    showToast("🔀 Opening optimized route…");
+    window.open(buildMapsUrl({ optimize: true }), "_blank");
+  });
+
+  btnNavigate.addEventListener("click", () => {
+    if (stops.length === 0) return;
+    if (useGPS && !gpsCoords) { showToast("Waiting for GPS…"); return; }
+    window.open(buildMapsUrl({ optimize: true }), "_blank");
+  });
+
+  /* Toast */
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  /* Init */
+  loadStops();
+  render();
+</script>
+</body>
+</html>
